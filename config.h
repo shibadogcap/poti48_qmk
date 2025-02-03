@@ -1,0 +1,1 @@
+#define PS2_PIO_USE_PIO1
