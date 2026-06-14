@@ -1,0 +1,23 @@
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Windows Zone Identifier
+*:Zone.Identifier
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+
+# Build artifacts (generated in vial-qmk's .build/)
+*.uf2
+*.elf
+*.hex
+*.bin
+
+# Python
+__pycache__/
+*.pyc
+.venv/
