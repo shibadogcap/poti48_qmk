@@ -35,7 +35,7 @@ jobs:
             - name: Install Python dependencies
               run: |
                   uv venv
-                  uv pip install -r requirements.txt
+                  uv pip install -r requirements.txt qmk
 
             - name: Build firmware (vial keymap)
               run: uv run --no-project make poti48:vial
