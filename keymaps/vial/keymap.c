@@ -155,9 +155,8 @@ enum custom_keycodes {
 #define GESTURE_TIMEOUT_STEP 50     // 50msずつ調整
 
 // Vialマクロ呼び出し用ヘルパ
-// カスタムキーコードとして定義されているため、QK_USER_0ではなく別の範囲を使用
-// Vialマクロは0-127の範囲なので、0x5F00-0x5F7Fを使用
-#define GVM(n) (0x5F00 + (n))
+// カスタムキーコード（QK_KB_0 = 0x5F00〜）と重複しないよう QK_USER_0（0x5F80〜）を使用
+#define GVM(n) (QK_USER_0 + (n))
 
 // ジェスチャマッピングテーブル
 // ここに好きなパターンを追加できます
