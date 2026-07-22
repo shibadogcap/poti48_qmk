@@ -23,3 +23,5 @@ __pycache__/
 .venv/
 *.backup
 poti48_vial.uf2
+*.vil
+build.sh

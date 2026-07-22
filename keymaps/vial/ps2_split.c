@@ -7,6 +7,7 @@
 #include <hardware/gpio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include "mousekey.h"
 
 // =========================================================
 // Left-side PS/2 init skip
@@ -69,7 +70,11 @@ void ps2_mouse_moved_user(report_mouse_t *mouse_report) {
     mouse_report->y = 0;
     mouse_report->v = 0;
     mouse_report->h = 0;
+#ifdef MOUSEKEY_ENABLE
+    mouse_report->buttons = mousekey_get_report().buttons;
+#else
     mouse_report->buttons = 0;
+#endif
 }
 
 // Called by ps2_pointing.c (custom pointing driver) to retrieve the

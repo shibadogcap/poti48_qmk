@@ -109,9 +109,9 @@ void gesture_fire(void) {
         
         // キーコードが設定されていれば実行
         if (keycode != KC_NO) {
-            // 0x5F00-0x5F7F の範囲をVialマクロIDとして扱い、直接送出
-            if (keycode >= 0x5F00 && keycode <= 0x5F7F) {
-                uint8_t macro_id = (uint8_t)(keycode - 0x5F00);
+            // QK_USER_0 から始まる範囲をVialマクロIDとして扱い、直接送出
+            if (keycode >= QK_USER_0 && keycode < QK_USER_0 + 64) {
+                uint8_t macro_id = (uint8_t)(keycode - QK_USER_0);
                 uprintf("  Executing Vial macro ID: %u\n", macro_id);
                 dynamic_keymap_macro_send(macro_id);
             } else {

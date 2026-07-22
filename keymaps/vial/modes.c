@@ -7,6 +7,7 @@
 #include <hardware/gpio.h>
 #include "gesture.h"
 #include "local_settings.h"
+#include "mousekey.h"
 
 // 押しながらマウス移動をスクロールに変換するフラグ
 static bool scroll_mode = false;
@@ -173,7 +174,7 @@ static void do_scroll(report_mouse_t *rpt, int16_t *ax, int16_t *ay, uint8_t *lo
     if (*lock == 2) wheel_h = accumulate_scroll(ax, 0, SCROLL_DIV, SCROLL_MULTIPLIER);
 
     rpt->x = 0; rpt->y = 0;
-    rpt->v = wheel_v; rpt->h = wheel_h;
+    rpt->v = -wheel_v; rpt->h = -wheel_h;
 }
 
 // === Main pointing device hook ===
@@ -181,6 +182,9 @@ report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
     if (!is_keyboard_master()) {
         return mouse_report;
     }
+
+    // マウスキーのボタン状態をマージしてドラッグの瞬断を防ぐ
+    mouse_report.buttons |= mousekey_get_report().buttons;
 
     // Scroll mode (hold)
     if (scroll_mode) {
