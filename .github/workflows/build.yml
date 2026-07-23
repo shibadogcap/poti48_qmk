@@ -68,15 +68,15 @@ jobs:
             # 2-2. Pro Micro Left (poti48_L folder, PS/2 disabled)
             - name: Setup ProMicro Left
               run: |
-                  mv temp_promicro/poti48_L keyboards/poti48_L
+                  mv temp_promicro/poti48_L keyboards/poti48_l
 
             - name: Build ProMicro Left firmware
               run: |
-                  uv run --no-project make poti48_L:vial
-                  if [ -f .build/poti48_L_vial.hex ]; then
-                    mv .build/poti48_L_vial.hex ./poti48_vial_promicro_left.hex
+                  uv run --no-project make poti48_l:vial
+                  if [ -f .build/poti48_l_vial.hex ]; then
+                    mv .build/poti48_l_vial.hex ./poti48_vial_promicro_left.hex
                   fi
-                  rm -rf keyboards/poti48_L
+                  rm -rf keyboards/poti48_l
 
             # 3. Artifact Upload
             - name: Upload RP2040 firmware
