@@ -5,8 +5,6 @@ on:
         branches: [main]
     pull_request:
         branches: [main]
-    release:
-        types: [published]
     workflow_dispatch:
 
 jobs:
@@ -19,49 +17,124 @@ jobs:
                   repository: vial-kb/vial-qmk
                   ref: vial
 
-            - name: Checkout poti48
-              uses: actions/checkout@v4
-              with:
-                  path: keyboards/poti48
-
             - name: Install uv
               uses: astral-sh/setup-uv@v5
 
-            - name: Install ARM toolchain
+            - name: Install ARM and AVR toolchain
               run: |
                   sudo apt-get update
-                  sudo apt-get install -y gcc-arm-none-eabi binutils-arm-none-eabi libnewlib-arm-none-eabi
+                  sudo apt-get install -y gcc-arm-none-eabi binutils-arm-none-eabi libnewlib-arm-none-eabi gcc-avr binutils-avr avr-libc
 
             - name: Install Python dependencies
               run: |
                   uv venv
                   uv pip install -r requirements.txt qmk
 
-            - name: Build firmware (vial keymap)
-              run: uv run --no-project make poti48:vial
+            # 1. RP2040 (main branch)
+            - name: Checkout poti48 (RP2040)
+              uses: actions/checkout@v4
+              with:
+                  path: keyboards/poti48
 
-            - name: Upload UF2 artifact
+            - name: Build RP2040 firmware
+              run: |
+                  uv run --no-project make poti48:vial
+                  mv .build/poti48_vial.uf2 ./poti48_vial_rp2040.uf2
+
+            - name: Clean up for ProMicro checkout
+              run: |
+                  rm -rf keyboards/poti48
+
+            # 2. Pro Micro (promicro branch)
+            - name: Checkout poti48 (ProMicro)
+              uses: actions/checkout@v4
+              with:
+                  ref: promicro
+                  path: temp_promicro
+
+            # 2-1. Pro Micro Right (poti48 folder, PS/2 enabled)
+            - name: Setup ProMicro Right
+              run: |
+                  mv temp_promicro/poti48 keyboards/poti48
+
+            - name: Build ProMicro Right firmware
+              run: |
+                  uv run --no-project make poti48:vial
+                  if [ -f .build/poti48_vial.hex ]; then
+                    mv .build/poti48_vial.hex ./poti48_vial_promicro_right.hex
+                  fi
+                  rm -rf keyboards/poti48
+
+            # 2-2. Pro Micro Left (poti48_L folder, PS/2 disabled)
+            - name: Setup ProMicro Left
+              run: |
+                  mv temp_promicro/poti48_L keyboards/poti48_L
+
+            - name: Build ProMicro Left firmware
+              run: |
+                  uv run --no-project make poti48_L:vial
+                  if [ -f .build/poti48_L_vial.hex ]; then
+                    mv .build/poti48_L_vial.hex ./poti48_vial_promicro_left.hex
+                  fi
+                  rm -rf keyboards/poti48_L
+
+            # 3. Artifact Upload
+            - name: Upload RP2040 firmware
               uses: actions/upload-artifact@v4
               with:
-                  name: poti48_vial
-                  path: .build/poti48_vial.uf2
+                  name: poti48_vial_rp2040
+                  path: ./poti48_vial_rp2040.uf2
+
+            - name: Upload ProMicro Right firmware
+              uses: actions/upload-artifact@v4
+              with:
+                  name: poti48_vial_promicro_right
+                  path: ./poti48_vial_promicro_right.hex
+
+            - name: Upload ProMicro Left firmware
+              uses: actions/upload-artifact@v4
+              with:
+                  name: poti48_vial_promicro_left
+                  path: ./poti48_vial_promicro_left.hex
 
     release:
-        if: github.event_name == 'release'
         needs: build
         runs-on: ubuntu-latest
         permissions:
             contents: write
         steps:
-            - name: Download artifact
+            - name: Create artifacts directory
+              run: mkdir ./artifacts
+
+            - name: Download RP2040 artifact
               uses: actions/download-artifact@v4
               with:
-                  name: poti48_vial
+                  name: poti48_vial_rp2040
+                  path: ./artifacts
 
-            - name: Upload to Release
+            - name: Download ProMicro Right artifact
+              uses: actions/download-artifact@v4
+              with:
+                  name: poti48_vial_promicro_right
+                  path: ./artifacts
+
+            - name: Download ProMicro Left artifact
+              uses: actions/download-artifact@v4
+              with:
+                  name: poti48_vial_promicro_left
+                  path: ./artifacts
+
+            - name: Update latest release
               env:
                   GH_TOKEN: ${{ github.token }}
               run: |
-                  gh release upload ${{ github.event.release.tag_name }} \
-                    poti48_vial.uf2 \
-                    --repo ${{ github.repository }}
+                  gh release create latest \
+                    --prerelease \
+                    --title "Latest Builds" \
+                    --notes "Automated builds for RP2040 and Pro Micro (Left/Right)." \
+                    --overwrite || true
+                  
+                  gh release upload latest \
+                    ./artifacts/* \
+                    --repo ${{ github.repository }} \
+                    --clobber
