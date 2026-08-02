@@ -174,7 +174,9 @@ static void do_scroll(report_mouse_t *rpt, int16_t *ax, int16_t *ay, uint8_t *lo
     if (*lock == 2) wheel_h = accumulate_scroll(ax, 0, SCROLL_DIV, SCROLL_MULTIPLIER);
 
     rpt->x = 0; rpt->y = 0;
-    rpt->v = -wheel_v; rpt->h = -wheel_h;
+    // 垂直ホイール: 下方向(y+)はスクロール下(HIDでv負)なので反転
+    // 水平ホイール: 右方向(x+)は右スクロール(HIDでh正)なので反転しない
+    rpt->v = -wheel_v; rpt->h = wheel_h;
 }
 
 // === Main pointing device hook ===
